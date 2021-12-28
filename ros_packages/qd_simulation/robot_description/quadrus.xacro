@@ -1,0 +1,362 @@
+<?xml version='1.0'?>
+<robot name="quadrus" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+	<!-- Constants for robot dimensions, mass and inertia-->
+	<xacro:property name="PI" value="3.1415926535897931"/>
+	
+	<xacro:property name="hip_offset" value="0.05925" /> 
+	<xacro:property name="upperleg_length" value="0.1396" /> 
+	<xacro:property name="upperleg_offset" value="0.01886" /> 
+	<xacro:property name="lowerleg_length" value="0.1296" />
+
+	<xacro:property name="rear_hip_long_offset" value="-0.1486" /> 
+	<xacro:property name="hip_long_center_dist" value="0.2686" />
+	<xacro:property name="hip_lat_center_dist" value="0.178" />
+	
+	<!-- Import Rviz colors -->
+	<xacro:include filename="$(find qd_simulation)/robot_description/materials.xacro" />
+	<!-- Import all Gazebo-customization elements, including Gazebo colors -->
+	<xacro:include filename="$(find qd_simulation)/robot_description/quadrus.gazebo" />
+
+	<!-- Used for fixing robot to Gazebo's base link -->
+	<link name="base_link"/>
+
+	<joint name="floating" type="fixed">
+		<parent link="base_link"/>
+		<child link="chassis"/>
+		<origin xyz="0 0 0"/>
+	</joint>
+
+	<!-- Chassis -->
+		<link name="chassis">
+			<visual>
+				<origin xyz="0 0 0" rpy="0 0 0" />
+				<geometry>
+					<mesh filename="package://qd_simulation/robot_description/mesh/body.dae"/>
+				</geometry>
+				<material name="blue" />
+			</visual>
+			
+			<collision>
+				<origin xyz="0 0 0" rpy="0 0 0" />
+				<geometry>
+					<box size="0.4172 0.136 0.03"/>
+					<!-- mesh filename="package://qd_simulation/robot_description/mesh/body.dae"/-->
+				</geometry>
+			</collision>
+		
+			<inertial>
+				<mass value="0.97859"/>
+				<origin xyz="-0.01428 0.00536 -0.00018"/>
+				<inertia ixx="0.00307" ixy="-0.00006" ixz="0.00006" iyy="0.01728" iyz="0.00003" izz="0.02001"/>
+			</inertial>	
+
+		</link>
+			
+		<gazebo reference="chassis">
+			<material>Gazebo/Blue</material>
+			<gravity>true</gravity>
+		</gazebo>
+
+	<xacro:macro name="quadrus_leg" params="long lat id">
+		<!-- Hip -->
+			<xacro:property name="hip_joint_id" value="J${(id-1)*3+1}"/>
+
+			<link name="link_${long}_${lat}_hip">
+				<visual>
+					<xacro:if value="${lat == 'left'}">
+						<origin xyz="0 0 0" rpy="0 0 0" />
+						<geometry>
+							<mesh filename="package://qd_simulation/robot_description/mesh/left_hip.dae"/>
+						</geometry>
+					</xacro:if>
+
+					<xacro:if value="${lat == 'right'}">
+						<origin xyz="0 0 0" rpy="0 0 0" />
+						<geometry>
+							<mesh filename="package://qd_simulation/robot_description/mesh/right_hip.dae"/>
+						</geometry>
+					</xacro:if>
+
+					<material name="red"/>
+				</visual>
+
+				<collision>
+					<xacro:if value="${lat == 'left'}">
+						<origin xyz="0.014 0.04125 0.0147" rpy="0 0 0" />
+						<geometry>
+							<box size="0.064 0.103 0.0685"/>
+							<!-- mesh filename="package://qd_simulation/robot_description/mesh/left_hip.dae"/-->
+						</geometry>
+					</xacro:if>
+
+					<xacro:if value="${lat == 'right'}">
+						<origin xyz="0.014 -0.04125 0.0147" rpy="0 0 0" />
+						<geometry>
+							<box size="0.064 0.103 0.0685"/>
+							<!-- mesh filename="package://qd_simulation/robot_description/mesh/right_hip.dae"/-->
+						</geometry>
+					</xacro:if>
+				</collision>
+
+				<inertial>
+					<mass value="0.1191"/>
+					<origin xyz="0.00364 0.0025 0.01974"/>
+					<inertia ixx="0.000176" ixy="-0.000004" ixz="-0.000017" iyy="0.000131" iyz="-0.000021" izz="0.000108"/>
+				</inertial>	
+
+			</link>
+
+			<joint name="${hip_joint_id}" type="revolute">
+				<parent link="chassis"/>
+				<child link="link_${long}_${lat}_hip"/>
+
+				<xacro:if value="${long == 'front' and lat == 'left'}">
+					<origin xyz="${rear_hip_long_offset+hip_long_center_dist} ${hip_lat_center_dist/2.0} 0" rpy="0 0 0" />
+					<limit effort="30" velocity="10" lower="-0.401" upper="0.785" />
+				</xacro:if>
+
+				<xacro:if value="${long == 'front' and lat == 'right'}">
+					<origin xyz="${rear_hip_long_offset+hip_long_center_dist} ${-hip_lat_center_dist/2.0} 0" rpy="0 0 0" /> 
+					<limit effort="30" velocity="10" lower="-0.785" upper="0.401" />
+				</xacro:if>
+
+				<xacro:if value="${long == 'back' and lat == 'left'}">
+					<origin xyz="${rear_hip_long_offset} ${hip_lat_center_dist/2.0} 0" rpy="0 0 0" /> 
+					<limit effort="30" velocity="10" lower="-0.401" upper="0.785" />
+				</xacro:if>
+
+				<xacro:if value="${long == 'back' and lat == 'right'}">
+					<origin xyz="${rear_hip_long_offset} ${-hip_lat_center_dist/2.0} 0" rpy="0 0 0" /> 
+					<limit effort="30" velocity="10" lower="-0.785" upper="0.401" />
+				</xacro:if>
+
+				<axis xyz="1 0 0" />
+				
+			</joint>
+
+			<transmission name="transmission_${long}_${lat}_hip">
+				<type>transmission_interface/SimpleTransmission</type>
+				<joint name="${hip_joint_id}">
+					<hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+				</joint>
+				<actuator name="motor_${long}_${lat}_hip">
+					<mechanicalReduction>1</mechanicalReduction>
+					<hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+				</actuator>
+			</transmission>
+
+			<gazebo reference="link_${long}_${lat}_hip">
+				<material>Gazebo/Red</material>
+				<!-- selfCollide>true</selfCollide -->
+				<gravity>true</gravity>
+			</gazebo>
+		
+		<!-- Upperleg -->
+			<xacro:property name="upperleg_joint_id" value="J${(id-1)*3+2}"/>
+
+			<link name="link_${long}_${lat}_upperleg">
+				<visual>
+					<xacro:if value="${lat == 'left'}">
+						<origin xyz="0 0 0" rpy="0 0 0" />
+						<geometry>
+							<mesh filename="package://qd_simulation/robot_description/mesh/left_femur.dae"/>
+						</geometry>
+					</xacro:if>
+
+					<xacro:if value="${lat == 'right'}">
+						<origin xyz="0 0 0" rpy="0 0 0" />
+						<geometry>
+							<mesh filename="package://qd_simulation/robot_description/mesh/right_femur.dae" />
+						</geometry>
+					</xacro:if>
+					<material name="blue" />
+				</visual>
+				<collision>
+					<xacro:if value="${lat == 'left'}">
+						<origin xyz="-0.066 0 -0.008" rpy="0 0 0" />
+						<geometry>
+							<box size="0.172 0.073 0.046"/>
+							<!-- mesh filename="package://qd_simulation/robot_description/mesh/left_femur.dae"/-->
+						</geometry>
+					</xacro:if>
+
+					<xacro:if value="${lat == 'right'}">
+						<origin xyz="-0.066 0 -0.008" rpy="0 0 0" />
+						<geometry>
+							<box size="0.172 0.073 0.046"/>
+							<!-- mesh filename="package://qd_simulation/robot_description/mesh/right_femur.dae"/-->
+						</geometry>
+					</xacro:if>
+				</collision>
+
+				<inertial>
+					<mass value="0.13118"/>
+					<origin xyz="-0.041697 -0.007043 -0.000214"/>
+					<inertia ixx="0.000042" ixy="-0.000009" ixz="0.000011" iyy="0.000283" iyz="0.000002" izz="0.000310"/>
+				</inertial>
+
+			</link>
+
+			<joint name="${upperleg_joint_id}" type="revolute">
+				<parent link="link_${long}_${lat}_hip"/>
+				<child link="link_${long}_${lat}_upperleg"/>
+
+				<xacro:if value="${lat == 'left'}">
+					<origin xyz="0 ${hip_offset} 0" rpy="0 0 0" />
+					<limit effort="30" velocity="10" lower="-1.5" upper="0.7" />
+				</xacro:if>
+
+				<xacro:if value="${lat == 'right'}">
+					<origin xyz="0 ${-hip_offset} 0" rpy="0 0 0" />
+					<limit effort="1" velocity="1.0" lower="-1.5" upper="0.7" />
+				</xacro:if>
+
+				<axis xyz="0 1 0" />
+
+			</joint>
+
+			<transmission name="transmission_${long}_${lat}_upperleg">
+				<type>transmission_interface/SimpleTransmission</type>
+				<joint name="${upperleg_joint_id}">
+					<hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+				</joint>
+				<actuator name="motor_${long}_${lat}_upperleg">
+					<mechanicalReduction>1</mechanicalReduction>
+					<hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+				</actuator>
+			</transmission>
+
+			<gazebo reference="link_${long}_${lat}_upperleg">
+				<material>Gazebo/White</material>
+				<!-- selfCollide>true</selfCollide -->
+				<gravity>true</gravity>
+			</gazebo>
+
+		<!-- LowerLeg -->	
+			<xacro:property name="lowerleg_joint_id" value="J${(id-1)*3+3}"/>
+
+			<link name="link_${long}_${lat}_lowerleg">
+				<visual>
+					<xacro:if value="${lat == 'left'}">
+						<origin xyz="0 0 0" rpy="0 0 0" />
+						<geometry>
+							<mesh filename="package://qd_simulation/robot_description/mesh/left_tibia.dae"/>
+						</geometry>
+					</xacro:if>
+
+					<xacro:if value="${lat == 'right'}">
+						<origin xyz="0 0 0" rpy="0 0 0" />
+						<geometry>
+							<mesh filename="package://qd_simulation/robot_description/mesh/right_tibia.dae"/>
+						</geometry>
+					</xacro:if>
+
+					<material name="blue"/>
+				</visual>
+				
+				<collision>
+					<xacro:if value="${lat == 'left'}">
+						<origin xyz="0.055 0 0" rpy="0 0 0" />
+						<geometry>
+							<box size="0.15 0.048 0.028"/>
+							<!-- mesh filename="package://qd_simulation/robot_description/mesh/left_tibia.dae"/-->
+						</geometry>
+					</xacro:if>
+
+					<xacro:if value="${lat == 'right'}">
+						<origin xyz="0.055 0 0" rpy="0 0 0" />
+						<geometry>
+							<box size="0.15 0.048 0.028"/>
+							<!-- mesh filename="package://qd_simulation/robot_description/mesh/right_tibia.dae"/-->
+						</geometry>
+					</xacro:if>
+
+				</collision>
+
+				<inertial>
+					<mass value="0.10059"/>
+					<origin xyz=" 0.025048 -0.002594 0.000523"/>
+					<inertia ixx="0.000017" ixy="0.000001" ixz="0.000004" iyy="0.000149" iyz="0.0" izz="0.000158"/>
+				</inertial>
+
+			</link>
+
+			<joint name="${lowerleg_joint_id}" type="revolute">
+				<parent link="link_${long}_${lat}_upperleg"/>
+				<child link="link_${long}_${lat}_lowerleg"/>
+				<origin xyz="${-upperleg_length} 0 ${-upperleg_offset}" rpy="0 1.5708 0" /> 
+				<axis xyz="0 1 0" />
+
+				<xacro:if value="${lat == 'right'}">
+					<limit effort="30" velocity="10" lower="-1.745" upper="1.396" />
+				</xacro:if>
+
+				<xacro:if value="${lat == 'left'}">
+					<limit effort="30" velocity="10" lower="-1.396" upper="1.745" />
+				</xacro:if>
+
+			</joint>
+
+			<transmission name="transmission_${long}_${lat}_lowerleg">
+				<type>transmission_interface/SimpleTransmission</type>
+				<joint name="${lowerleg_joint_id}">
+					<hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+				</joint>
+				<actuator name="motor_${long}_${lat}_lowerleg">
+					<mechanicalReduction>1</mechanicalReduction>
+					<hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+				</actuator>
+			</transmission>
+
+			<gazebo reference="link_${long}_${lat}_lowerleg">
+				<material>Gazebo/White</material>
+				<!-- selfCollide>true</selfCollide -->
+				<gravity>true</gravity>
+			</gazebo>
+
+		<!-- Paw -->	
+			<link name="link_${long}_${lat}_paw">
+				<visual>
+					<origin xyz="0 0 0" rpy="0 0 0" />
+					<geometry>
+						<mesh filename="package://qd_simulation/robot_description/mesh/tpe_tip.dae"/>
+					</geometry>
+					<material name="green"/>
+				</visual>
+				
+				<collision>
+					<origin xyz="0 0 0" rpy="0 0 0" />
+					<geometry>
+						<sphere radius = "0.02"/>
+						<!-- mesh filename="package://qd_simulation/robot_description/mesh/tpe_tip.dae"/-->
+					</geometry>
+				</collision>
+
+				<inertial>
+					<mass value="0.003"/>
+					<inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
+				</inertial>
+
+			</link>
+
+			<joint name="joint_${long}_${lat}_paw" type="fixed">
+				<parent link="link_${long}_${lat}_lowerleg"/>
+				<child link="link_${long}_${lat}_paw"/>
+				<origin xyz="${lowerleg_length} 0 0" rpy="0 0.698 0" /> 
+			</joint>
+
+			<gazebo reference="link_${long}_${lat}_paw">
+				<material>Gazebo/Green</material>
+				<!-- selfCollide>true</selfCollide -->
+				<gravity>true</gravity>
+			</gazebo>
+	
+	</xacro:macro>
+
+	<xacro:quadrus_leg long="front" lat="left" id="1"/>
+	<xacro:quadrus_leg long="front" lat="right" id="2"/>
+	<xacro:quadrus_leg long="back" lat="left" id="3"/>
+	<xacro:quadrus_leg long="back" lat="right" id="4"/>
+	
+</robot>

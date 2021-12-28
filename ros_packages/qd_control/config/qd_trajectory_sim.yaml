@@ -1,0 +1,68 @@
+quadrus:
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50  
+
+  # Trajectory controller -------------------------------------
+  leg_controller:
+    type: "effort_controllers/JointTrajectoryController"
+    joints:
+      - J1
+      - J2
+      - J3
+      - J4
+      - J5
+      - J6
+      - J7
+      - J8
+      - J9
+      - J10
+      - J11
+      - J12
+
+    constraints:
+      goal_time: 0.02
+      stopped_velocity_tolerance: 0.02
+      J1:
+        goal: 0.05
+      J2:
+        goal: 0.05                  
+      J3:
+        goal: 0.05
+      J4:
+        goal: 0.05
+      J5:
+        goal: 0.05                 
+      J6:
+        goal: 0.05
+      J7:
+        goal: 0.05
+      J8:
+        goal: 0.05                  
+      J9:
+        goal: 0.05
+      J10:
+        goal: 0.05
+      J11:
+        goal: 0.05                  
+      J12:
+        goal: 0.05                    
+
+    gains:
+      J1: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J2: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J3: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J4: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J5: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J6: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J7: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J8: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J9: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J10: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J11: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+      J12: {p: 10.0,  d: 0.2, i: 0, i_clamp: 0}
+
+    state_publish_rate:  50            
+    action_monitor_rate: 20           
+    stop_trajectory_duration: 0

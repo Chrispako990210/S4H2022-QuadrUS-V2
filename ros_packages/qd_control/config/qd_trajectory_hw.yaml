@@ -1,0 +1,55 @@
+quadrus:
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50  
+
+  # Trajectory controller -------------------------------------
+  leg_controller:
+    type: "position_controllers/JointTrajectoryController"
+    joints:
+      - J1
+      - J2
+      - J3
+      - J4
+      - J5
+      - J6
+      - J7
+      - J8
+      - J9
+      - J10
+      - J11
+      - J12
+
+    constraints:
+      goal_time: 0.02
+      stopped_velocity_tolerance: 0.02
+      J1:
+        goal: 0.05
+      J2:
+        goal: 0.05                   
+      J3:
+        goal: 0.05
+      J4:
+        goal: 0.05
+      J5:
+        goal: 0.05                
+      J6:
+        goal: 0.05
+      J7:
+        goal: 0.05
+      J8:
+        goal: 0.05                  
+      J9:
+        goal: 0.05
+      J10:
+        goal: 0.05
+      J11:
+        goal: 0.05                  
+      J12:
+        goal: 0.05
+
+
+    state_publish_rate:  25            
+    action_monitor_rate: 20           
+    stop_trajectory_duration: 0
